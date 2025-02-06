@@ -72,6 +72,7 @@ app.post('/login', (req, res) => {
 });
 
 // Ruta para la página principal (inicio.ejs)
+// Ruta para la página principal (inicio.ejs)
 app.get('/inicio', (req, res) => {
   // Verifica si el usuario está autenticado (opcional, pero recomendable)
   if (!req.session.user) {
@@ -82,12 +83,15 @@ app.get('/inicio', (req, res) => {
     SELECT 
       a.codpro, 
       p.razon, 
-      IF(COUNT(*) = SUM(a.ter = 1), 'Terminado', 'En Proceso') AS estado,
-      MAX(a.numero) AS numero
+      CASE 
+        WHEN MIN(a.ter) = 1 AND MAX(a.ter) = 1 THEN 'Terminado'
+        ELSE 'En Proceso'
+      END AS estado,
+      a.numero
     FROM aus_pepend a
     JOIN aus_pro p ON a.codpro = p.codigo
-    GROUP BY a.codpro, p.razon
-    HAVING COUNT(*) = SUM(a.ter = 1)
+    GROUP BY a.codpro, p.razon, a.numero
+    HAVING SUM(CASE WHEN a.ter = 1 THEN 1 ELSE 0 END) > 0
   `;
   pool.query(query, (error, results) => {
     if (error) {
