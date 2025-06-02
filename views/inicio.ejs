@@ -51,17 +51,23 @@
               <th>razon</th>
               <th>estado</th>
               <th>numero</th>
+              <th>usuario</th>
+              <th>fecha</th>
+              <th>hora</th>
             </tr>
           </thead>
           <tbody>
-            <% headers.forEach(header => { %>
-              <tr data-codpro="<%= header.codpro %>">
-                <td><%= header.codpro %></td>
-                <td><%= header.razon %></td>
-                <td><%= header.estado %></td>
-                <td><%= header.numero %></td>
-              </tr>
-            <% }); %>
+          <% headers.forEach(header => { %>
+            <tr data-codpro="<%= header.codpro %>">
+              <td><%= header.codpro %></td>
+              <td><%= header.razon %></td>
+              <td><%= header.estado %></td>
+              <td><%= header.numero %></td>
+              <td><%= header.usuario || '-' %></td>
+              <td><%= header.fecha ? header.fecha.toISOString().split('T')[0] : '-' %></td>
+              <td><%= header.hora || '-' %></td>
+            </tr>
+          <% }); %>
           </tbody>
         </table>
       </div>
