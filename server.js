@@ -72,7 +72,6 @@ app.post('/login', (req, res) => {
 });
 
 // Ruta para la página principal (inicio.ejs)
-// Ruta para la página principal (inicio.ejs)
 app.get('/inicio', (req, res) => {
   if (!req.session.user) return res.redirect('/login');
 
@@ -80,16 +79,15 @@ app.get('/inicio', (req, res) => {
     SELECT 
       a.codpro, 
       p.razon, 
-      a.numero,
-      MAX(COALESCE(a.usuario, b.usuario)) AS usuario,
-      MAX(COALESCE(a.fecha, b.fecha)) AS fecha,
-      MAX(COALESCE(a.hora, b.hora)) AS hora,
       CASE 
         WHEN MIN(a.ter) = 1 AND MAX(a.ter) = 1 THEN 'Terminado'
         ELSE 'En Proceso'
-      END AS estado
+      END AS estado,
+      a.numero,
+      MAX(a.fecha) AS fecha,
+      MAX(a.hora) AS hora,
+      MAX(a.usuario) AS usuario
     FROM aus_pepend a
-    LEFT JOIN aus_pepend2 b ON a.codbar = b.codbar
     JOIN aus_pro p ON a.codpro = p.codigo
     GROUP BY a.codpro, p.razon, a.numero
     HAVING SUM(CASE WHEN a.ter = 1 THEN 1 ELSE 0 END) > 0
@@ -100,10 +98,7 @@ app.get('/inicio', (req, res) => {
       console.error('Error en la consulta de encabezados: ', error);
       return res.status(500).send("Error en la base de datos");
     }
-    res.render('inicio', {
-      headers: results,
-      usuario: req.session.user.nombre
-    });
+    res.render('inicio', { headers: results });
   });
 });
 
