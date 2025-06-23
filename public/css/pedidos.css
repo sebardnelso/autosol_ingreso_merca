@@ -1,0 +1,256 @@
+/* Reset de estilos básicos */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Estilo general del cuerpo */
+body {
+  background-color: #f5f6fa;
+  color: #4d4d4d;
+  font-size: 16px;
+  line-height: 1.6;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+/* Títulos */
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #2c3e50;
+  text-align: center;
+}
+
+/* Formulario de filtros */
+form {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+  width: 100%;
+  max-width: 900px;
+}
+
+/* Etiquetas y controles de formulario */
+label {
+  font-weight: 500;
+  margin-bottom: 8px;
+  display: inline-block;
+  color: #333;
+}
+
+input[type="date"],
+input[type="text"],
+input[type="checkbox"] {
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  margin-bottom: 18px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #f7f7f7;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+}
+
+input[type="checkbox"]:checked {
+  background-color: #4CAF50;
+}
+
+button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  font-size: 1rem;
+  width: 100%;
+  margin-top: 20px;
+}
+
+button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+/* Estilos de la tabla */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+th,
+td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  font-size: 1rem;
+}
+
+th {
+  background-color: #f7f7f7;
+  color: #333;
+}
+
+td {
+  color: #555;
+}
+
+tr:hover {
+  background-color: #f9fafb;
+}
+
+button[type="button"] {
+  background-color: #28a745;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  border: none;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button[type="button"]:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+button[type="button"]:active {
+  transform: translateY(1px);
+}
+
+/* Modal */
+#modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  overflow: auto;
+  padding-top: 60px;
+}
+
+#modal-content {
+  background-color: #fff;
+  margin: auto;
+  padding: 40px;
+  width: 80%;
+  max-width: 1000px;
+  border-radius: 8px;
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* Close button */
+#close-btn {
+  color: #aaa;
+  font-size: 28px;
+  font-weight: bold;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+}
+
+#close-btn:hover,
+#close-btn:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Animación de desvanecimiento */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Tabla del modal */
+.details-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.details-table th,
+.details-table td {
+  padding: 12px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.details-table th {
+  background-color: #f2f2f2;
+  color: #333;
+}
+
+.details-table td {
+  color: #333;
+}
+
+.details-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+  body {
+    padding: 15px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  form {
+    padding: 20px;
+  }
+
+  table {
+    font-size: 0.9rem;
+  }
+
+  button {
+    font-size: 1.1rem;
+  }
+}
+
+/* Maximizar la tabla a la pantalla */
+table {
+  width: calc(60% - 40px);  /* Para darle un margen de 20px en ambos lados */
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
