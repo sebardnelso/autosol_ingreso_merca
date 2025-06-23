@@ -1,15 +1,14 @@
-// server.js
 const express = require('express');
 const mysql = require('mysql');
 const path = require('path');
 const session = require('express-session'); // Requerir express-session
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 // Configurar express-session
 app.use(session({
-  secret: 'tu_secreto_aqui', // Cambia esto por una cadena secreta robusta
+  secret: 'Seba014', // Cambia esto por una cadena secreta robusta
   resave: false,
   saveUninitialized: true,
   cookie: { secure: false } // Asegúrate de cambiar a true si usas HTTPS
@@ -48,7 +47,6 @@ app.get('/login', (req, res) => {
 });
 
 // Ruta para procesar el login (POST)
-// (Este ejemplo es básico; en producción deberías validar y proteger las credenciales)
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
   const query = `
@@ -64,11 +62,17 @@ app.post('/login', (req, res) => {
     if (results.length > 0) {
       // Guardar información en la sesión (por ejemplo, el usuario)
       req.session.user = results[0];
-      return res.redirect('/inicio');
+      return res.redirect('/menu'); // Redirigir a /menu en caso de login exitoso
     } else {
       return res.render('login', { error: "Usuario o contraseña incorrectos" });
     }
   });
+});
+
+// Ruta para mostrar el menú principal (menu.ejs)
+app.get('/menu', (req, res) => {
+  if (!req.session.user) return res.redirect('/login'); // Verifica que el usuario esté logueado
+  res.render('menu'); // renderiza el archivo menu.ejs
 });
 
 // Ruta para la página principal (inicio.ejs)
@@ -102,11 +106,24 @@ app.get('/inicio', (req, res) => {
   });
 });
 
+// Ruta para la página de pedidos (pedidos.ejs)
+app.get('/pedidos', (req, res) => {
+  if (!req.session.user) return res.redirect('/login');
 
+  const query = `
+    SELECT * FROM aus_pepend
+  `;
+  pool.query(query, (error, results) => {
+    if (error) {
+      console.error('Error en la consulta de pedidos: ', error);
+      return res.status(500).send("Error en la base de datos");
+    }
+    res.render('pedidos', { pedidos: results });
+  });
+});
 
 // Endpoint para obtener los detalles de un encabezado (AJAX)
 app.get('/detalle/:codpro', (req, res) => {
-  // Opcional: puedes validar que el usuario esté logueado aquí también
   const codpro = req.params.codpro;
   const query = `
     SELECT 
@@ -125,13 +142,165 @@ app.get('/detalle/:codpro', (req, res) => {
   });
 });
 
+
+// Ruta para la página de pedidos (pedidos.ejs)
+app.get('/pedidoscelu', (req, res) => {
+  if (!req.session.user) return res.redirect('/login');
+
+  // Filtros recibidos desde la vista
+  const { 
+    fecha, 
+    codcli, 
+    codcli_value, 
+    pendienteFacturar, 
+    pendientePreparar, 
+    todo, 
+    soloMisiones, 
+    soloCorrientes 
+  } = req.query;
+
+  // Verificar que la fecha sea válida
+  if (!fecha) {
+    return res.status(400).send("La fecha es obligatoria.");
+  }
+
+  // Mostrar los parámetros recibidos para depuración
+  console.log('Parametros recibidos: ', req.query);
+
+  let query = `
+    SELECT 
+      a.fecha, 
+      a.numped, 
+      a.codcli, 
+      a.transporte, 
+      a.hora, 
+      a.realiza, 
+      a.hecho, 
+      a.zona
+    FROM aus_ped a
+    WHERE a.fecha = ? 
+  `;
+
+  const params = [fecha]; // Iniciar los parámetros con la fecha
+
+  // Filtrar por código de cliente si se selecciona
+  if (codcli && codcli_value) {
+    query += ` AND a.codcli = ? `;
+    params.push(codcli_value); // Agregar codcli_value a los parámetros
+  }
+
+  // Filtro de "pendiente a facturar" (hecho = 0)
+  if (pendienteFacturar) {
+    query += ` AND a.hecho = 0 `;
+  }
+
+  // Filtro de "pendiente a preparar" (realiza IS NULL)
+  if (pendientePreparar) {
+    query += ` AND (a.realiza IS NULL OR a.realiza = '') `;
+  }
+
+  // Filtro por "solo Misiones" (zona = 1)
+  if (soloMisiones) {
+    query += ` AND a.zona = 1 `;
+  }
+
+  // Filtro por "solo Corrientes" (zona = 2)
+  if (soloCorrientes) {
+    query += ` AND a.zona = 2 `;
+  }
+
+  // Filtro por "todo de todo"
+  if (todo) {
+    // No aplica filtros adicionales
+  }
+
+  // Agrupar por código de cliente
+  query += ` GROUP BY a.codcli`;
+
+  // Mostrar la consulta generada para depuración
+  console.log('Consulta SQL generada: ', query);
+  console.log('Parametros SQL: ', params);
+
+  pool.query(query, params, (error, results) => {
+    if (error) {
+      console.error('Error en la consulta de pedidos: ', error);
+      return res.status(500).send("Error en la base de datos");
+    }
+
+    // Formatear las fechas antes de enviarlas a la vista
+    results.forEach(pedido => {
+      if (!pedido.fecha || pedido.fecha === '0000-00-00') {
+        pedido.fecha = 'Sin Fecha';
+      } else {
+        const date = new Date(pedido.fecha);
+        if (isNaN(date)) {
+          pedido.fecha = 'Sin Fecha';
+        } else {
+          const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+          pedido.fecha = formattedDate;
+        }
+      }
+      
+      if (!pedido.hora || pedido.hora === 'NULL' || pedido.hora === '') {
+        pedido.hora = 'No disponible';
+      }
+    });
+
+    res.render('pedidos', { pedidos: results });
+  });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Endpoint para obtener los detalles de un pedido por código de cliente
+app.get('/detalle/:codcli/:numped', (req, res) => {
+  const { codcli, numped } = req.params;
+  const query = `
+    SELECT 
+      a.codori, 
+      a.cantidad, 
+      a.stock, 
+      a.codbarped, 
+      a.cantidad_real
+    FROM aus_ped a
+    WHERE a.codcli = ? AND a.numped = ?
+  `;
+  
+  pool.query(query, [codcli, numped], (error, results) => {
+    if (error) {
+      console.error('Error en la consulta de detalles del pedido: ', error);
+      return res.status(500).send("Error en la base de datos");
+    }
+
+    if (results.length > 0) {
+      res.json(results);  // Devuelve los detalles del pedido
+    } else {
+      res.status(404).send("Detalles no encontrados");
+    }
+  });
+});
+
+
+
+
 // Ruta para cerrar sesión
 app.get('/logout', (req, res) => {
-  // Destruir la sesión y redirigir a login
-  req.session.destroy(err => {
+  req.session.destroy((err) => {
     if (err) {
       console.error(err);
-      // En caso de error, redirige igualmente a login o muestra un mensaje
       return res.redirect('/inicio');
     }
     res.redirect('/login');
