@@ -6,7 +6,6 @@
   <title>Login</title>
   <link rel="stylesheet" type="text/css" href="/css/login.css">
   <style>
-    /* Fondo mosaico utilizando la imagen logo.jpg */
     body {
       margin: 0;
       padding: 0;
@@ -17,8 +16,6 @@
       justify-content: center;
       align-items: center;
     }
-    
-    /* Contenedor del formulario */
     .login-container {
       background-color: rgba(255, 255, 255, 0.95);
       border: 1px solid #ccc;
@@ -28,21 +25,18 @@
       max-width: 400px;
       width: 90%;
     }
-    
     .login-container h2 {
       margin-bottom: 20px;
       font-size: 24px;
       color: #333;
       text-align: center;
     }
-    
     .login-container label {
       display: block;
       margin-bottom: 5px;
       font-weight: bold;
       color: #555;
     }
-    
     .login-container input[type="text"],
     .login-container input[type="password"] {
       width: 100%;
@@ -52,7 +46,6 @@
       border-radius: 4px;
       box-sizing: border-box;
     }
-    
     .login-container button {
       width: 100%;
       padding: 10px;
@@ -64,11 +57,9 @@
       cursor: pointer;
       transition: background-color 0.3s ease;
     }
-    
     .login-container button:hover {
       background-color: #0056b3;
     }
-    
     .error {
       color: red;
       margin-bottom: 15px;
@@ -78,7 +69,7 @@
 </head>
 <body>
   <div class="login-container">
-    <form action="/login" method="POST">
+    <form action="/login" method="POST"> <!-- Cambié la acción a '/login' -->
       <h2>Login</h2>
       <% if (error) { %>
         <div class="error"><%= error %></div>
