@@ -1,0 +1,258 @@
+<!-- views/pedidos.ejs -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Pedidos</title>
+  <link rel="stylesheet" href="/css/pedidos.css">
+  <style>
+    /* Estilos para el modal */
+    #modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.4);
+      overflow: auto;
+    }
+
+    #modal-content {
+      background-color: white;
+      margin: 15% auto;
+      padding: 20px;
+      width: 80%;
+      max-width: 1000px;
+    }
+
+    #close-btn {
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+      float: right;
+    }
+
+    #close-btn:hover,
+    #close-btn:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    /* Estilos para la tabla de detalles */
+    .details-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .details-table th, .details-table td {
+      padding: 8px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+
+    .details-table th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <h1>Pedidos</h1>
+
+  <form method="GET" action="/pedidoscelu" id="filtersForm">
+    <!-- Filtro por fecha -->
+    <label for="fecha">Fecha:</label>
+    <input type="date" id="fecha" name="fecha" required>
+
+    <!-- Filtro por código de cliente -->
+    <label>
+      <input type="checkbox" id="codcli" name="codcli" value="true"> Por código de cliente
+    </label>
+    <input type="text" id="codcli_value" name="codcli_value" placeholder="Ingrese el código de cliente">
+
+    <!-- Filtros de estado -->
+    <label>
+      <input type="checkbox" id="pendienteFacturar" name="pendienteFacturar" value="true"> Pendiente a facturar
+    </label>
+
+    <label>
+      <input type="checkbox" id="pendientePreparar" name="pendientePreparar" value="true"> Pendiente a preparar
+    </label>
+
+    <!-- Filtro todo de todo -->
+    <label>
+      <input type="checkbox" id="todo" name="todo" value="true"> Todo de todo
+    </label>
+
+    <!-- Filtros de zona -->
+    <label>
+      <input type="checkbox" id="soloMisiones" name="soloMisiones" value="true"> Solo Misiones
+    </label>
+
+    <label>
+      <input type="checkbox" id="soloCorrientes" name="soloCorrientes" value="true"> Solo Corrientes
+    </label>
+
+    <button type="submit">Filtrar</button>
+  </form>
+
+  <!-- La tabla está inicialmente oculta -->
+  <table id="pedidos-table">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Num Pedido</th>
+        <th>Código Cliente</th>
+        <th>Transporte</th>
+        <th>Hora</th>
+        <th>Realiza</th>
+        <th>¿Está facturado?</th>
+        <th>Acciones</th> <!-- Nueva columna para el botón "Ver detalle" -->
+      </tr>
+    </thead>
+    <tbody>
+      <% pedidos.forEach(pedido => { %>
+        <tr data-codcli="<%= pedido.codcli %>" data-numped="<%= pedido.numped %>" class="pedido-row">
+          <td><%= pedido.fecha %></td>
+          <td><%= pedido.numped %></td>
+          <td><%= pedido.codcli %></td>
+          <td><%= pedido.transporte %></td>
+          <td><%= pedido.hora %></td>
+          <td><%= pedido.realiza ? pedido.realiza : 'Pendiente' %></td>
+          <td><%= pedido.hecho == 1 ? 'Sí' : 'No' %></td>
+          <td><button type="button" onclick="showDetails('<%= pedido.codcli %>', '<%= pedido.numped %>')">Ver detalle</button></td> <!-- Botón para ver detalles -->
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <!-- Modal para mostrar el detalle -->
+  <div id="modal">
+    <div id="modal-content">
+      <span id="close-btn">&times;</span>
+      <h2>Detalle del Pedido</h2>
+      <table class="details-table" id="pedido-details">
+        <thead>
+          <tr>
+            <th>Cliente Pidió (Código de Origen)</th>
+            <th>Cantidad (Pedido)</th>
+            <th>Se le Mandó (Código de Barras)</th>
+            <th>Cantidad Real</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Las filas se llenarán dinámicamente con los datos -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Función para mostrar el modal con el detalle del pedido
+    function showDetails(codcli, numped) {
+      fetch(`/detalle/${codcli}/${numped}`)
+        .then(response => response.json())
+        .then(data => {
+          // Verificar si los datos están presentes
+          if (data && data.length > 0) {
+            const detailsTableBody = document.querySelector('#pedido-details tbody');
+            detailsTableBody.innerHTML = ''; // Limpiar las filas existentes
+
+            // Añadir cada línea de detalle como una fila de la tabla
+            data.forEach(item => {
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                <td>${item.codori}</td>
+                <td>${item.cantidad}</td>
+                <td>${item.codbarped}</td>
+                <td>${item.cantidad_real}</td>
+              `;
+              detailsTableBody.appendChild(row);
+            });
+
+            document.getElementById('modal').style.display = 'block';
+          } else {
+            alert("No se encontraron detalles para este pedido.");
+          }
+        })
+        .catch(error => {
+          console.error('Error al obtener los detalles:', error);
+          alert("Hubo un error al cargar los detalles del pedido.");
+        });
+    }
+
+    // Cerrar el modal
+    document.getElementById('close-btn').onclick = function() {
+      document.getElementById('modal').style.display = 'none';
+    };
+
+    // Cerrar el modal si se hace clic fuera del contenido
+    window.onclick = function(event) {
+      if (event.target === document.getElementById('modal')) {
+        document.getElementById('modal').style.display = 'none';
+      }
+    };
+
+    // Al enviar el formulario, guardar los filtros en localStorage
+    const form = document.getElementById('filtersForm');
+
+    form.addEventListener('submit', function() {
+      // Obtener los valores de los filtros
+      const fecha = document.getElementById('fecha').value;
+      const codcli = document.getElementById('codcli').checked;
+      const codcli_value = document.getElementById('codcli_value').value;
+      const pendienteFacturar = document.getElementById('pendienteFacturar').checked;
+      const pendientePreparar = document.getElementById('pendientePreparar').checked;
+      const todo = document.getElementById('todo').checked;
+      const soloMisiones = document.getElementById('soloMisiones').checked;
+      const soloCorrientes = document.getElementById('soloCorrientes').checked;
+
+      // Guardar los filtros en localStorage
+      localStorage.setItem('fecha', fecha);
+      localStorage.setItem('codcli', codcli);
+      localStorage.setItem('codcli_value', codcli_value);
+      localStorage.setItem('pendienteFacturar', pendienteFacturar);
+      localStorage.setItem('pendientePreparar', pendientePreparar);
+      localStorage.setItem('todo', todo);
+      localStorage.setItem('soloMisiones', soloMisiones);
+      localStorage.setItem('soloCorrientes', soloCorrientes);
+    });
+
+    // Cuando la página cargue, recuperar los filtros de localStorage y aplicarlos
+    window.onload = function() {
+      if (localStorage.getItem('fecha')) {
+        document.getElementById('fecha').value = localStorage.getItem('fecha');
+      }
+      if (localStorage.getItem('codcli') === 'true') {
+        document.getElementById('codcli').checked = true;
+      }
+      if (localStorage.getItem('codcli_value')) {
+        document.getElementById('codcli_value').value = localStorage.getItem('codcli_value');
+      }
+      if (localStorage.getItem('pendienteFacturar') === 'true') {
+        document.getElementById('pendienteFacturar').checked = true;
+      }
+      if (localStorage.getItem('pendientePreparar') === 'true') {
+        document.getElementById('pendientePreparar').checked = true;
+      }
+      if (localStorage.getItem('todo') === 'true') {
+        document.getElementById('todo').checked = true;
+      }
+      if (localStorage.getItem('soloMisiones') === 'true') {
+        document.getElementById('soloMisiones').checked = true;
+      }
+      if (localStorage.getItem('soloCorrientes') === 'true') {
+        document.getElementById('soloCorrientes').checked = true;
+      }
+
+      // Si hay resultados de pedidos, mostrar la tabla
+      if (document.querySelector("#pedidos-table tbody tr")) {
+        document.getElementById('pedidos-table').style.display = 'block';
+      }
+    };
+  </script>
+</body>
+</html>
