@@ -215,7 +215,7 @@ app.get('/pedidoscelu', (req, res) => {
   }
 
   // Agrupar por código de cliente
-  query += ` GROUP BY a.codcli`;
+  //query += ` GROUP BY a.codcli`;
 
   // Mostrar la consulta generada para depuración
   console.log('Consulta SQL generada: ', query);
