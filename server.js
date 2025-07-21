@@ -148,7 +148,6 @@ app.get('/detalle/:codpro', (req, res) => {
 app.get('/pedidoscelu', (req, res) => {
   if (!req.session.user) return res.redirect('/login');
 
-  // Filtros recibidos desde la vista
   const { 
     fecha, 
     codcli, 
@@ -160,66 +159,58 @@ app.get('/pedidoscelu', (req, res) => {
     soloCorrientes 
   } = req.query;
 
-  // Verificar que la fecha sea válida
   if (!fecha) {
     return res.status(400).send("La fecha es obligatoria.");
   }
 
-  // Mostrar los parámetros recibidos para depuración
   console.log('Parametros recibidos: ', req.query);
 
-  let query = 
+  let query = `
     SELECT 
-      a.fecha, 
-      a.numped, 
-      a.codcli, 
-      a.transporte, 
-      a.hora, 
-      a.realiza, 
-      a.hecho, 
-      a.zona
+      a.numped,
+      MAX(a.fecha) AS fecha,
+      MAX(a.codcli) AS codcli,
+      MAX(a.transporte) AS transporte,
+      MAX(a.hora) AS hora,
+      MAX(a.realiza) AS realiza,
+      MAX(a.hecho) AS hecho,
+      MAX(a.zona) AS zona
     FROM aus_ped a
-    WHERE a.fecha = ? 
-  ;
+    WHERE a.fecha = ?
+  `;
 
-  const params = [fecha]; // Iniciar los parámetros con la fecha
+  const params = [fecha];
 
-  // Filtrar por código de cliente si se selecciona
   if (codcli && codcli_value) {
-    query +=  AND a.codcli = ? ;
-    params.push(codcli_value); // Agregar codcli_value a los parámetros
+    query += ` AND a.codcli = ? `;
+    params.push(codcli_value);
   }
 
-  // Filtro de "pendiente a facturar" (hecho = 0)
   if (pendienteFacturar) {
-    query +=  AND a.hecho = 0 ;
+    query += ` AND a.hecho = 0 `;
   }
 
-  // Filtro de "pendiente a preparar" (realiza IS NULL)
   if (pendientePreparar) {
-    query +=  AND (a.realiza IS NULL OR a.realiza = '') ;
+    query += ` AND (a.realiza IS NULL OR a.realiza = '') AND a.numped = 0 `;
   }
 
-  // Filtro por "solo Misiones" (zona = 1)
   if (soloMisiones) {
-    query +=  AND a.zona = 1 ;
+    query += ` AND a.zona = 1 `;
   }
 
-  // Filtro por "solo Corrientes" (zona = 2)
   if (soloCorrientes) {
-    query +=  AND a.zona = 2 ;
+    query += ` AND a.zona = 2 `;
   }
 
-  // Filtro por "todo de todo"
-  if (todo) {
-    // No aplica filtros adicionales
+  // === Lógica de agrupamiento dinámica ===
+  if (pendientePreparar && !codcli_value && !todo) {
+    // Mostrar pendientes sin agrupar por pedido
+    query += ` GROUP BY a.codcli `;
+  } else {
+    // Mostrar pedidos agrupados por número
+    query += ` GROUP BY a.numped `;
   }
 
-  // Agrupar por código de cliente
-  query +=  GROUP BY a.codcli;
-  query +=  GROUP BY a.numped;
-
-  // Mostrar la consulta generada para depuración
   console.log('Consulta SQL generada: ', query);
   console.log('Parametros SQL: ', params);
 
@@ -229,7 +220,6 @@ app.get('/pedidoscelu', (req, res) => {
       return res.status(500).send("Error en la base de datos");
     }
 
-    // Formatear las fechas antes de enviarlas a la vista
     results.forEach(pedido => {
       if (!pedido.fecha || pedido.fecha === '0000-00-00') {
         pedido.fecha = 'Sin Fecha';
@@ -238,11 +228,10 @@ app.get('/pedidoscelu', (req, res) => {
         if (isNaN(date)) {
           pedido.fecha = 'Sin Fecha';
         } else {
-          const formattedDate = ${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()};
-          pedido.fecha = formattedDate;
+          pedido.fecha = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
         }
       }
-      
+
       if (!pedido.hora || pedido.hora === 'NULL' || pedido.hora === '') {
         pedido.hora = 'No disponible';
       }
